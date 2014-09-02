@@ -1,0 +1,1 @@
+rsync -r -v -p --exclude ".svn" letv/  xiaomi/

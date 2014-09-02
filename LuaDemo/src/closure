@@ -1,0 +1,161 @@
+[[
+javascript的闭包
+
+http://coolshell.cn/articles/6731.html
+http://www.zhihu.com/question/19554716
+--闭包中局部变量是引用而非拷贝
+--外部函数所有局部变量都在闭包内，即使这个变量声明在内部函数定义之后
+--每次最外面函数调用的时候创建一个新的闭包
+--当在一个循环中赋值函数时，这些函数将绑定同样的闭包环境
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Closures
+
+var Counter = (function() {
+  var privateCounter = 0;
+  function changeBy(val) {
+    privateCounter += val;
+  }
+  return {
+    increment: function() {
+      changeBy(1);
+    },
+    decrement: function() {
+      changeBy(-1);
+    },
+    value: function() {
+      return privateCounter;
+    }
+  }   
+})();
+
+alert(Counter.value()); /* 提示 0 */
+Counter.increment();
+Counter.increment();
+alert(Counter.value()); /* 提示 2 */
+Counter.decrement();
+alert(Counter.value()); /* 提示 1 */
+这里有好多细节。在以往的示例中，每个闭包都有它自己的环境；而这次我们只创建了一个环境，为三个函数所共享：Counter.increment，Counter.decrement 和 Counter.value。
+
+该共享环境创建于一个匿名函数体内，该函数一经定义立刻执行。环境中包含两个私有项：名为 privateCounter 的变量和名为 changeBy 的函数。 这两项都无法在匿名函数外部直接访问。必须通过匿名包装器返回的三个公共函数访问
+
+function showHelp(help) {
+  document.getElementById('help').innerHTML = help;
+}
+
+function setupHelp() {
+  var helpText = [
+      {'id': 'email', 'help': 'Your e-mail address'},
+      {'id': 'name', 'help': 'Your full name'},
+      {'id': 'age', 'help': 'Your age (you must be over 16)'}
+    ];
+
+  for (var i = 0; i < helpText.length; i++) {
+    var item = helpText[i];
+    document.getElementById(item.id).onfocus = function() {
+      showHelp(item.help);
+    }
+  }
+}
+
+setupHelp();
+行这段代码后，您会发现它没有达到想要的效果。无论焦点在哪个输入域上，显示的都是关于年龄的消息。
+
+该问题的原因在于赋给 onfocus 的函数是闭包；它们由函数定义和记录自 setupHelp 函数作用域的环境构成。一共创建了三个闭包，但是它们都共享同一个环境。在 onfocus 的回调被执行时，循环早已经完成，且此时 item 变量（由所有三个闭包所共享）已经指向了 helpText 列表中的最后一项。
+
+function showHelp(help) {
+  document.getElementById('help').innerHTML = help;
+}
+
+function makeHelpCallback(help) {
+  return function() {
+    showHelp(help);
+  };
+}
+
+function setupHelp() {
+  var helpText = [
+      {'id': 'email', 'help': 'Your e-mail address'},
+      {'id': 'name', 'help': 'Your full name'},
+      {'id': 'age', 'help': 'Your age (you must be over 16)'}
+    ];
+
+  for (var i = 0; i < helpText.length; i++) {
+    var item = helpText[i];
+    document.getElementById(item.id).onfocus = makeHelpCallback(item.help);
+  }
+}
+
+setupHelp();
+这段代码可以如我们所期望的那样工作。所有的回调不再共享同一个环境， makeHelpCallback 函数为每一个回调创建一个新的环境(makeHelpCallback已经先执行了)。在这些环境中，help 指向 helpText 数组中对应的字符串。
+
+1、将变量 i 保存给在每个段落对象(p)上
+  function init1() {
+    var pAry = document.getElementsByTagName("p");
+    for( var i=0; i<pAry.length; i++ ) {
+       pAry[i].i = i;
+       pAry[i].onclick = function() {
+          alert(this.i);
+       }
+    }
+  }
+2、将变量 i 保存在匿名函数自身
+  function init2() {
+    var pAry = document.getElementsByTagName("p");
+    for( var i=0; i<pAry.length; i++ ) {
+     (pAry[i].onclick = function() {
+          alert(arguments.callee.i);
+      }).i = i;
+    }
+  }
+3、加一层闭包，i 以函数参数形式传递给内层函数
+  function init3() {
+    var pAry = document.getElementsByTagName("p");
+    for( var i=0; i<pAry.length; i++ ) {
+     (function(arg){
+         pAry[i].onclick = function() {
+            alert(arg);
+         };
+     })(i);//调用时参数
+    }
+}
+4、加一层闭包，i 以局部变量形式传递给内层函数
+  function init4() {
+    var pAry = document.getElementsByTagName("p");
+    for( var i=0; i<pAry.length; i++ ) {
+      (function () {
+        var temp = i;//调用时局部变量
+        pAry[i].onclick = function() {
+          alert(temp);
+        }
+      })();
+  }
+}
+5、加一层闭包，返回一个函数作为响应事件(注意与3的细微区别)
+  function init5() {
+    var pAry = document.getElementsByTagName("p");
+    for( var i=0; i<pAry.length; i++ ) {
+     pAry[i].onclick = function(arg) {
+         return function() {//返回一个函数
+         alert(arg);
+       }
+     }(i);
+    }
+}
+
+6、用Function实现，实际上每产生一个函数实例就会产生一个闭包
+  function init6() {
+      var pAry = document.getElementsByTagName("p");
+      for( var i=0; i<pAry.length; i++ ) {
+        pAry[i].onclick = new Function("alert(" + i + ");");//new一次就产生一个函数实例
+      }
+  }
+  
+7、用Function实现，注意与6的区别
+  function init7() {
+      var pAry = document.getElementsByTagName("p");
+      for( var i=0; i<pAry.length; i++ ) {
+           pAry[i].onclick = Function('alert('+i+')');
+      }
+  }
+  
+ ]]
