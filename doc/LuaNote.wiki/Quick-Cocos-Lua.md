@@ -1,3 +1,198 @@
+###EventProxy
+```
+framework/cc/EventProxy就是一个工具类（包装类），调用eventDispatcher同名方法
+
+function EventProxy:addEventListener(eventName, listener, data)
+    local handle = self.eventDispatcher_:addEventListener(eventName, listener, data)
+    self.handles_[#self.handles_ + 1] = {eventName, handle}
+    return self
+end
+```
+###cc函数与GameObject
+```
+cc(node):addComponent("components.behavior.EventProtocol"):exportMethods()
+实现原理（framework/cc/init.lua）
+
+-- cc = cc.GameObject.extend()
+local GameObject ={}
+GameObject.extend = function (target)
+  print("extend target", target)
+  return target;
+end
+  
+local ccmt = {}
+ccmt.__call = function(self, target)
+    if target then
+        return GameObject.extend(target)
+    end
+    print("cc() - invalid target")
+end
+setmetatable(cc, ccmt)
+
+测试：OK
+local app =  {}
+cc(app)
+
+cc.GameObject.extend()所做的工作为：
+function GameObject.extend(target)
+    target.components_ = {}
+
+    function target:checkComponent(name)
+        return self.components_[name] ~= nil
+    end
+
+    function target:addComponent(name)
+        local component = Registry.newObject(name)
+        self.components_[name] = component
+        component:bind_(self)
+        return component
+    end
+
+    function target:removeComponent(name)
+        local component = self.components_[name]
+        if component then component:unbind_() end
+        self.components_[name] = nil
+    end
+
+    function target:getComponent(name)
+        return self.components_[name]
+    end
+
+    return target
+end
+
+为目标添加components_变量，以及添加(以及Component绑定)、删除(以及Component解绑)、获取、检查Component的方法。
+```
+
+###Component
+
+```
+framework/cc/components/Component
+导出函数，绑定target之后，让tartet拥有组件的导出函数.export之后,Component中的方法中self不是扩展后的对象，而是Component
+
+function Component:exportMethods_(methods)
+    self.exportedMethods_ = methods
+    local target = self.target_
+    local com = self
+    for _, key in ipairs(methods) do
+        if not target[key] then
+            local m = com[key]
+            target[key] = function(__, ...)
+            print("exportMethods_ component is" , com)
+                --将第一个参数由self(扩展后的对象)替换成component本身
+                return m(com, ...)
+            end
+        end
+    end
+    return self
+end
+
+绑定方法，将组件绑定到一个target上面，只能绑定到一个target（但是一个target可以包含多个组件）。如果target已经拥有同名组件，不在绑定（通过GameObject.extend之后的对象才可以调用的此方法）
+function Component:bind_(target)
+    self.target_ = target
+    for _, name in ipairs(self.depends_) do
+        if not target:checkComponent(name) then
+            target:addComponent(name)
+        end
+    end
+    self:onBind_(target)
+end
+
+解绑，若此组件有导出函数，则将绑定的target删除到处函数
+function Component:unbind_()
+    if self.exportedMethods_ then
+        local target = self.target_
+        for _, key in ipairs(self.exportedMethods_) do
+            target[key] = nil
+        end
+    end
+    self:onUnbind_()
+end
+```
+
+###常用组件
+```
+framework/cc/init包含以下代码：
+-- init components
+local components = {
+    "components.behavior.StateMachine",
+    "components.behavior.EventProtocol",
+    "components.ui.BasicLayoutProtocol",
+    "components.ui.LayoutProtocol",
+}
+for _, packageName in ipairs(components) do
+    cc.Registry.add(import("." .. packageName, CURRENT_MODULE_NAME), packageName)
+end
+
+```
+
+
+####EventProtocol
+
+```
+--components/behavior/EventProtocol
+function EventProtocol:exportMethods()
+    self:exportMethods_({
+        "addEventListener",
+        "dispatchEvent",
+        "removeEventListener",
+        "removeEventListenersByTag",
+        "removeEventListenersByEvent",
+        "removeAllEventListenersForEvent",
+        "removeAllEventListeners",
+        "hasEventListener",
+        "dumpAllEventListeners",
+    })
+    return self.target_
+end
+
+
+
+1，addEventListener(eventName, listener, tag)
+同一个事件注意注册多个监听，其中将listener添加到isteners_中。EventProtocol的listeners结构如下：
+
+EventProtocol.listeners_ = {
+	EVENT_A = {
+		autoincreated_handle = { listener, tag },
+		autoincreated_handle = { listener, tag }
+	},
+	EVENT_B = {}
+}
+
+
+2，EventProtocol:dispatchEvent(event)
+分发事件，event至少需要包含name字段。经过处理之后，listener接受到event的数据结构如下（我们可以添加其他属性）：
+event = {
+	name =  "NAME",
+	target = target,
+	stop_ = false,
+	stop = function(self)
+        	self.stop_ = true
+    		end
+}
+
+
+
+
+```
+
+
+####ModelBase天生就具有EventProtocol组件的方法：
+
+```
+function ModelBase:ctor(properties)
+    cc(self):addComponent("components.behavior.EventProtocol"):exportMethods()
+
+    self.isModelBase_ = true
+    if type(properties) ~= "table" then properties = {} end
+    self:setProperties(properties)
+end
+
+```
+
+
+
+
 ###cocos2dx扩展
 
 ```
@@ -222,61 +417,7 @@ cc(target)
     
 ```  
 
-###cc函数
-```
-cc(node):addComponent("components.behavior.EventProtocol"):exportMethods()
-实现原理（framework/cc/init.lua）
 
--- cc = cc.GameObject.extend()
-local GameObject ={}
-GameObject.extend = function (target)
-  print("extend target", target)
-  return target;
-end
-  
-local ccmt = {}
-ccmt.__call = function(self, target)
-    if target then
-        return GameObject.extend(target)
-    end
-    print("cc() - invalid target")
-end
-setmetatable(cc, ccmt)
-
-测试：OK
-local app =  {}
-cc(app)
-
-cc.GameObject.extend()所做的工作为：
-function GameObject.extend(target)
-    target.components_ = {}
-
-    function target:checkComponent(name)
-        return self.components_[name] ~= nil
-    end
-
-    function target:addComponent(name)
-        local component = Registry.newObject(name)
-        self.components_[name] = component
-        component:bind_(self)
-        return component
-    end
-
-    function target:removeComponent(name)
-        local component = self.components_[name]
-        if component then component:unbind_() end
-        self.components_[name] = nil
-    end
-
-    function target:getComponent(name)
-        return self.components_[name]
-    end
-
-    return target
-end
-
-为目标添加components_变量，以及添加(以及Component绑定)、删除(以及Component解绑)、获取、检查Component的方法。
-```
 ```
 -- 八大类型：thread/function/table/userdata/string/number/boolean/nil
 -- false和nil为假，其余全部为真(包括空字符串和0)
@@ -411,275 +552,220 @@ boom:playAnimationOnce(display.newAnimation(frames, 0.3/ 8), true)
 
 
 
-###Component的target_和exportMethods_
+
+###一、2.2.1
 ```
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
-function BaseScene:ctor()
-    --echoInfo("BaseScene:ctor")
+以下内容适用于 Quick-Cocos2d-x 2.2.1-rc 版本，新版触摸机制请参考新文档
+
+我们知道 Cocos2d-x 里，整个游戏的画面是由一系列的 CCScene, CCNode, CCSprite, CCLayer, CCMenu, CCMenuItem 等对象构成的。
+而所有这些对象都是从 CCNode 这个类继承而来。我们可以将 CCNode 称为 显示节点 。
+
+在 Cocos2d-x 里，只有 CCLayer 对象才能接受触摸事件。而 CCLayer 总是响应整个屏幕范围内的触摸，这就要求开发者在拿到触摸事件后，再做进一步的处理。
+
+例如有一个需求是在玩家触摸屏幕上的方块时，人物角色做一个动作。那么使用 CCLayer 接受到触摸事件后，开发者需要自行判断触摸位置是否在方块之内。当屏幕上有很多东西需
+要响应玩家交互时，程序结构就开始变得复杂了。
+
+所以 Quick-Cocos2d-x 允许开发者将任何一个 CCNode 设置为接受触摸事件。并且触摸事件一开始只会出现在这个 CCNode 的 触摸区域 内。
+
+这里的触摸区域，就是一个 CCNode 及其所有子 CCNode 显示内容占据的屏幕空间。要注意的是这个屏幕空间包含了图片的透明部分。下图中，节点 A 是一个 CCSprite 对象，
+它的触摸区域就是图片大小；而节点 B 是一个 CCNode 对象，其中包含了三个 CCSprite 对象，那么节点 B 的触摸区域就是三个 CCSprite 对象触摸区域的合集。
+
+
+现在，我们知道了显示层级、触摸区域，那么要让任何 CCNode 都可以接受触摸事件就变得很简单了：
+
+由一个管理者负责登记所有需要接受触摸事件的 CCNode
+管理者响应全屏幕的触摸
+触摸开始的时候，管理者对已经登记的 CCNode 按照显示层级进行排序，然后依次检查触摸位置是否在它们的触摸区域内。如果是，则将触摸事件传递给相应的 CCNode 对象。并且将这个 CCNode 对象记录到一个列表里。这个列表称为 可触摸节点列表。
+触摸事件持续发生时，管理者将触摸事件发送给列表中每一个 CCNode 对象。
+触摸事件结束时，管理者发送事件给列表中的对象，然后清理列表，准备开始下一次触摸响应。
+在目前的实现里，这个管理者的角色，我们交给了 CCScene。
+```
+
+几个引擎级事件，分别是，
+
+```
+http://cn.cocos2d-x.org/tutorial/show?id=1210：Quick-Cocos2d-x 触摸机制详解
+http://cn.cocos2d-x.org/tutorial/show?id=1418：单点触摸
+
+ Cocos2d-x 引擎级事件
+  cc.NODE_EVENT = 0                节点事件在一个 Node 对象进入、退出场景时触发。
+  cc.NODE_ENTER_FRAME_EVENT = 1    每一次刷新屏幕前（也就是前一帧和下一帧之间）都会触发事件
+  cc.NODE_TOUCH_EVENT = 2
+  cc.NODE_TOUCH_CAPTURE_EVENT = 3  捕获触摸事件
+  cc.MENU_ITEM_CLICKED_EVENT = 4   菜单项点击事件
+  cc.ACCELERATE_EVENT = 5          重力感应事件
+  cc.KEYPAD_EVENT = 6              硬件按键事件
+```
+
+
+###二、2.2.3的方式
+在2.2.3之前的版本（不包括2.2.3），触摸机制和廖大在那篇文章里面的说的一样，添加触摸响应采用addTouchEventListener来完成，不过在此之后，对触摸机制就进行了完全的改写，和Cocos2d-x 3.0的版本一样，采用更加灵活的CCNode事件分发机制。
+
+```
+local layer = display.newLayer()
+self:addChild(layer)
+layer:setTouchEnabled(true)
+layer:setTouchMode(cc.TOUCH_MODE_ONE_BY_ONE)
+layer:addNodeEventListener(cc.NODE_TOUCH_EVENT, function (event)
+    local x, y, prevX, prevY = event.x, event.y, event.prevX, event.prevY
+    if event.name == "began" then
+        print("layer began")
+    elseif event.name == "moved" then
+        print("layer moved")
+    elseif event.name == "ended" then
+        print("layer ended")
+    end
+        return true
+    end
+ )
+```
+cc.NODE_EVENT可以响应一个节点的onenter，onexit，cleanup，exitTransitionStart，enterTransitionFinish这些事件，当然如果不使用添加监听的方式，
+ 我们也可以重写相应的函数，
+ 
+ ```
+  function MyScene:onEnter()  end  
+  function MyScene:onExit()  end
+  ```
+从上面的代码可以看到，可以设置触摸的模式，
+
+ ```
+  cc.TOUCH_MODE_ONE_BY_ONE 是单点触摸
+  cc.TOUCH_MODE_ALL_AT_ONCE 是多点触摸
+ ```
+在添加节点事件监听addNodeEventListener中，我们设置监听事件的类型是cc.NODE_TOUCH_EVENT
+
+其次是event参数，在event参数里，里面有name，x，y，prevX，prevY 这五个变量，分别代表着
+  event.name 是触摸事件的状态：began, moved, ended, cancelled, added（仅限多点触摸）, removed（仅限多点触摸）；
+  event.x, event.y 是触摸点当前位置；
+  event.prevX, event.prevY 是触摸点之前的位置；
+所以添加上面的代码，简单触摸屏幕，就可以看到log中的print的结果。
+
+在触摸的回调函数function(event)中，记得考虑是否需要添加返回值，返回值的作用不用多说，true则后面的moved，ended等状态会接收到，否则接收不到，默认如果不添加则代表false。
+
+在新版触摸机制中，还需要主要的一个就是触摸吞噬：
+
+ ```
+  setTouchSwallowEnabled(true)
+ ```
+它的作用就是是否继续传递触摸消息，在绘制节点的时候，越是在屏幕上方，就是zOrder越大，越优先接收到触摸事件，如果设置吞噬，那么在它下方的节点都不会接
+收到触摸消息了。默认如果不设置则quick自动设置为true。
+当然，不仅仅可以给layer添加触摸事件，你也可以给精灵添加，这就看你游戏的需要了。
+
+
+###2.2.1的touch事件
+```
+setTouchEnabled() 是否允许一个 CCNode 响应触摸事件
+addTouchEventListener() 设置触摸事件的处理函数
+removeTouchEventListener() 删除触摸事件的处理函数
+
+ 创建一个图片显示对象
+local sprite = display.newSprite("Button.png")
+ 启用触摸
+sprite:setTouchEnabled(true)
+ 设置处理函数
+sprite:addTouchEventListener(function(event, x, y, prevX, prevY)
+    print(event, x, y, prevX, prevY)
+    return true  返回 true 表示这个 CCNode 在触摸开始后接受后续的事件
+end)
+```
+
+多点触摸
+http://cn.cocos2d-x.org/tutorial/show?id=1465:多点触摸
+
+帧事件
+http://cn.cocos2d-x.org/tutorial/show?id=1468
+帧事件就是update定时器，每一帧调用，如果要使用，除了要添加监听，还需要开启update定时器，像这样的代码，
+local layer = display.newLayer()    
+   self:addChild(layer)  
+   layer:scheduleUpdate()  
+   layer:addNodeEventListener(cc.NODE_ENTER_FRAME_EVENT, function(dt)  
+       print(dt)  
+   end)
+
+硬件按键事件
+
+要实现一个按键响应事件主要就两步：
+  1. 打开键盘功能setKeypadEnabled(true)
+  2. 添加事件监听addNodeEventListener
+
+
+回调函数中event参数只有一个字段“key”，可以判断获取key是back还是menu，这样一来，按键事件就算掌握了，使用device类提供
+的对话框咱们来测试下，当然这个最好是真机测试了。
+function MyScene:ctor()   
+    local layer = display.newLayer()    
+    self:addChild(layer)  
+    layer:setKeypadEnabled(true)  
+    layer:addNodeEventListener(cc.KEYPAD_EVENT, function (event)  
+        if event.key == "back" then  
+            print("back")  
+            device.showAlert("Confirm Exit", "Are you sure exit game ?", {"YES", "NO"}, function (event)  
+                if event.buttonIndex == 1 then  
+                    CCDirector:sharedDirector():endToLua()  
+                else  
+                    device.cancelAlert()   
+                end  
+            end)           
+        elseif event.key == "menu" then  
+            print("menu")               
+        end        
+    end)   
+end
+
+升级到 2.2.3
+http://cn.cocos2d-x.org/article/index?type=quick_doc&url=/doc/cocos-docs-master/manual/framework/quick/how-to/upgrade-to-2_2_3/zh.md
+================================================================================================
+================================================================================================
+
+
     
-    --Make scene into a GameObject
-    cc.GameObject.extend(self)
-    self:addComponent("app.components.VoiceOperator"):exportMethods()
-end
-   ------------------------------------------------------------------------------
-   
-   /Users/wangliang/rev/env/dev/quick-cocos2d-x-2.2.5/framework/cc/GameObject.lua:
-   ------------------------------------------------------------------------------
- function GameObject.extend(target)
-
-    target.components_ = {}
-
-    function target:checkComponent(name)
-        return self.components_[name] ~= nil
-    end
-
-    function target:addComponent(name)
-        local component = Registry.newObject(name)
-        self.components_[name] = component
-        component:bind_(self)
-        return component
-    end
-
-    function target:removeComponent(name)
-        local component = self.components_[name]
-        if component then component:unbind_() end
-        self.components_[name] = nil
-    end
-
-    function target:getComponent(name)
-        return self.components_[name]
-    end
-
-    return target
-end
-
-   ----------------------------------------------------------------------
-/Users/wangliang/rev/env/dev/quick-cocos2d-x-2.2.5/framework/cc/components/Component.lua:
-
-function Component:exportMethods_(methods)
-    self.exportedMethods_ = methods
-    local target = self.target_
-    local com = self
-    for _, key in ipairs(methods) do
-        if not target[key] then
-            local m = com[key]
-            target[key] = function(__, ...)
-                return m(com, ...)
-            end
-        end
-    end
-    return self
-end
-
-   16  
-   17  function Component:getTarget()
-   18:     return self.target_
-   19  end
-   20  
-   21  function Component:exportMethods_(methods)
-   22      self.exportedMethods_ = methods
-   23:     local target = self.target_
-   24      local com = self
-   25      for _, key in ipairs(methods) do
-   ..
-   35  
-   36  function Component:bind_(target)
-   37:     self.target_ = target
-   38      for _, name in ipairs(self.depends_) do
-   39          if not target:checkComponent(name) then
-   ..
-   46  function Component:unbind_()
-   47      if self.exportedMethods_ then
-   48:         local target = self.target_
-   49          for _, key in ipairs(self.exportedMethods_) do
-   50              target[key] = nil
-```
-
-```
-------------------------------------------------------------------------------
-------------------------------------------------------------------------------
-function BaseScene:ctor()
-    --echoInfo("BaseScene:ctor")
     
-    --Make scene into a GameObject
-    cc.GameObject.extend(self)
+    
+framework:quick的核心部分，在Cocos2d-x基础上自己搭建的一套framework。
 
-    self:addComponent("app.components.PopupManager"):exportMethods()
-    self:addComponent("app.components.KeypadDispatcher"):exportMethods()
-    self:addComponent("app.components.VoiceOperator"):exportMethods()
-end
-   ------------------------------------------------------------------------------
-   
-   /Users/wangliang/rev/env/dev/quick-cocos2d-x-2.2.5/framework/cc/GameObject.lua:
-   ------------------------------------------------------------------------------
- function GameObject.extend(target)
-
-    target.components_ = {}
-
-    function target:checkComponent(name)
-        return self.components_[name] ~= nil
-    end
-
-    function target:addComponent(name)
-        local component = Registry.newObject(name)
-        self.components_[name] = component
-        component:bind_(self)
-        return component
-    end
-
-    function target:removeComponent(name)
-        local component = self.components_[name]
-        if component then component:unbind_() end
-        self.components_[name] = nil
-    end
-
-    function target:getComponent(name)
-        return self.components_[name]
-    end
-
-    return target
-end
-
-   ----------------------------------------------------------------------
-/Users/wangliang/rev/env/dev/quick-cocos2d-x-2.2.5/framework/cc/components/Component.lua:
-   16  
-   17  function Component:getTarget()
-   18:     return self.target_
-   19  end
-   20  
-   21  function Component:exportMethods_(methods)
-   22      self.exportedMethods_ = methods
-   23:     local target = self.target_
-   24      local com = self
-   25      for _, key in ipairs(methods) do
-   ..
-   35  
-   36  function Component:bind_(target)
-   37:     self.target_ = target
-   38      for _, name in ipairs(self.depends_) do
-   39          if not target:checkComponent(name) then
-   ..
-   46  function Component:unbind_()
-   47      if self.exportedMethods_ then
-   48:         local target = self.target_
-   49          for _, key in ipairs(self.exportedMethods_) do
-   50              target[key] = nil
-```
-*Component的target_就是扩展后的对象*
-
-####EventProtocol
-
-```
-function EventProtocol.extend(object)
-    PRINT_DEPRECATED("module api.EventProtocol is deprecated, please use cc.components.behavior.EventProtocol")
-
-    object.listeners_ = {}
-    object.listenerHandleIndex_ = 0
-
-    function object:addEventListener(eventName, listener, target)
-        eventName = string.upper(eventName)
-        if object.listeners_[eventName] == nil then
-            object.listeners_[eventName] = {}
-        end
-
-        local ttarget = type(target)
-        if ttarget == "table" or ttarget == "userdata" then
-            PRINT_DEPRECATED("api.EventProtocol.addEventListener(eventName, listener, target) is deprecated, please use api.EventProtocol.addEventListener(eventName, handler(target, listener))")
-            listener = handler(target, listener)
-            tag = ""
-        end
-
-        object.listenerHandleIndex_ = object.listenerHandleIndex_ + 1
-        local handle = string.format("HANDLE_%d", object.listenerHandleIndex_)
-        object.listeners_[eventName][handle] = listener
-        return handle
-    end
-
-    function object:dispatchEvent(event)
-        event.name = string.upper(event.name)
-        local eventName = event.name
-        if object.listeners_[eventName] == nil then return end
-        event.target = object
-        for handle, listener in pairs(object.listeners_[eventName]) do
-            local ret = listener(event, a)
-            if ret == false then
-                break
-            elseif ret == "__REMOVE__" then
-                object.listeners_[eventName][handle] = nil
-            end
-        end
-    end
-
-    function object:removeEventListener(eventName, key)
-        eventName = string.upper(eventName)
-        if object.listeners_[eventName] == nil then return end
-
-        for handle, listener in pairs(object.listeners_[eventName]) do
-            if key == handle or key == listener then
-                object.listeners_[eventName][handle] = nil
-                break
-            end
-        end
-    end
-
-    function object:removeAllEventListenersForEvent(eventName)
-        object.listeners_[string.upper(eventName)] = nil
-    end
-
-    function object:removeAllEventListeners()
-        object.listeners_ = {}
-    end
-
-    return object
-end
-```
-*EventProtocol也是Component*
-
-
-####ModelBase天生就具有EventProtocol组件的方法：
-
-```
-function ModelBase:ctor(properties)
-    cc(self):addComponent("components.behavior.EventProtocol"):exportMethods()
-
-    self.isModelBase_ = true
-    if type(properties) ~= "table" then properties = {} end
-    self:setProperties(properties)
-end
-
-function EventProtocol:exportMethods()
-    self:exportMethods_({
-        "addEventListener",
-        "dispatchEvent",
-        "removeEventListener",
-        "removeEventListenersByTag",
-        "removeEventListenersByEvent",
-        "removeAllEventListenersForEvent",
-        "removeAllEventListeners",
-        "hasEventListener",
-        "dumpAllEventListeners",
-    })
-    return self.target_
-end
-```
-
-####export之后,Component中的方法中self不是扩展后的对象，而是Component
-```
-function Component:exportMethods_(methods)
-    self.exportedMethods_ = methods
-    local target = self.target_
-    local com = self
-    for _, key in ipairs(methods) do
-        if not target[key] then
-            local m = com[key]
-            target[key] = function(__, ...)
-                print("exportMethods_ component is" , com)
-                --将第一个参数由self(扩展后的对象)替换成component本身
-                return m(com, ...)
-            end
-        end
-    end
-    return self
-end
-```
+api:quick封装的库目录,现在基本里面的接口都改到cc目录下。
+  Context.lua: 存取索引数据,目前已经弃用。
+  EventProtocol.lua: 事件侦听协议，目前已经弃用。推荐使用cc.components.behavior.EventProtocol。
+  GameNetwork.lua:第三方游戏平台SDK集成，如：OpenFeint，GameCenter等。现在已经弃用，推荐使用cc.sdk.social。
+  GameState.lua:存取游戏数据。现在已经弃用，推荐使用cc.utils.State。
+  Localize.lua:游戏本地化，主要是文字的本地华。现在已经弃用，推荐使用cc.utils.Localize。
+  Store.lua:提供了游戏内的计费功能。现在已经弃用，推荐使用cc.sdk.pay。
+  Timer.lua:这个是基于 2D-X 中 scheduler 计时器的一个扩展，他可以方便的管理各个计时器，并添加了一些方便的功能，例如：100秒的时间，每5秒调用触发一次计时器事件。推荐使用cc.utils.Timer。
+  
+  
+cc：cc扩展在Cocos2d-x C++ API和quick基本模块的基础上，提供了符合脚本风格的事件接口、组件架构等扩展。
+  init.lua:初始化cc扩展
+  GameObject.lua:quick现在使用的一套类似Unity3D的GameObject的框架
+  Registry.lua:quick中GameObject的注册器
+  EventProxy.lua:quick的事件管理器
+  ad:广告平台sdk的封装，目前只有pushbox的接口
+  analytics:游戏统计分析平台的封装，目前只有友盟的接口
+  Component:组件基类，所有组件都要派生自它
+  feedback:反馈SDK的封装，目前只有友盟反馈sdk的接口
+  mvc:quick中的mvc结构，要使用mvc结构的话只需要集成AppBase和ModelBase
+  net:网络接口封装，使用Socket连接
+  push:push SDK封装，目前包含友盟push和cocopush两个push的SDK
+  share:分享SDK封装，目前包含友盟分享SDK
+  ui:quick封装的Cocos2d-x控件，包含:UIGroup、UIImage，UIPushButton，UICheckBoxButton，UICheckBoxButtonGroup，UILabel，UISlider，UIBoxLayout
+  update:自动更新组件的封装，使用的是友盟的更新SDK
+  utils:quick中其他的封装的功能
+  
+cocos2dx:quick对Cocos2d-x中的扩展
+platform:平台移植代码
+audio.lua:音乐、音效管理
+cocos2dx.lua:导入Cocos2d-x的库
+crypto.lua:加解密、数据编码库
+debug.lua:提供调试接口
+deprecated.lua:定义所有已经废弃的 API
+device.lua:提供设备相关属性的查询，以及设备功能的访问
+display.lua:与显示图像、场景有关的功能
+filter.lua:滤镜功能
+functions.lua:提供一组常用函数，以及对 Lua 标准库的扩展
+init.lua:quick framework的初始化
+json.lua:json的编码与解码
+luaj.lua:Lua与Java之间的交互接口
+luaoc.lua:Lua与Objective-c之间的交互接口
+network.lua:网络接口封装，检查wifi和3G网络情况等
+schduler.lua:全局计时器、计划任务，该模块在框架初始化时不会自动载入
+shortcode.lua:一些经常使用的短小的代码，比如设置旋转角度之类
+transition.lua:为动作和对象添加效果
+ui.lua:创建和管理用户界面
