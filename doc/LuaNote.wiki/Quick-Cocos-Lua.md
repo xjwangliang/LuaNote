@@ -1,3 +1,30 @@
+http://www.cnblogs.com/imoon/archive/2013/01/15/2860877.html cocos2d-x 观察者模式
+http://www.cocos2d-x.org/wiki/EventDispatcher_Mechanism EventDispatcher Mechanism
+
+
+###调用“父类”的方法
+```
+以AppBase:enterScene方法为例
+function AppBase:enterScene(sceneName, args, transitionType, time, more)
+    local scenePackageName = self. packageRoot .. ".scenes." .. sceneName
+    local sceneClass = require(scenePackageName)
+    local scene = sceneClass.new(unpack(checktable(args)))
+    display.replaceScene(scene, transitionType, time, more)
+end
+
+--调用“父类”的方法，直接调用
+function MyApp:enterMenuScene()
+    print("enterMenuScene self is " .. tostring(self) .. " MyApp is " .. tostring(MyApp))
+    self:enterScene("MenuScene", nil, "fade", 0.6, display.COLOR_WHITE)
+end
+
+--调用“父类”的方法，通过super，注意是点号，不是冒号
+function UIDemoApp:enterScene(sceneName, ...)
+    self.currentSceneName_ = sceneName
+    UIDemoApp.super.enterScene(self, sceneName, ...)
+end
+```
+
 ###EventProxy
 ```
 framework/cc/EventProxy就是一个工具类（包装类），调用eventDispatcher同名方法
