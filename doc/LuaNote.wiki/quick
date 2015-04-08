@@ -1,0 +1,190 @@
+   local buttonPosition = self:convertToWorldSpace(self.buttonSprite_:getPositionInCCPoint())
+       if event == "began" then
+        if not self:checkTouchInButton_(x, y) then return false end
+        local buttonPosition = self:convertToWorldSpace(self.buttonSprite_:getPositionInCCPoint())
+        self.buttonPositionOffset_.x = buttonPosition.x - x
+        self.buttonPositionOffset_.y = buttonPosition.y - y
+        self.fsm_:doEvent("press")
+        self:dispatchEvent({name = UISlider.PRESSED_EVENT, x = x, y = y, touchInTarget = true})
+        return true
+    end
+
+    
+
+
+   -- attempt to call method 'description' or 'typeid' (a nil value)
+    -- local node = display.newNode()
+    -- node:description()
+    -- typeid(node):name()
+
+
+    local anchorPoint = map:getAnchorPoint()
+    local x, y = map:getPosition()
+    printf("mapPosition %f,%f", x, y)
+    printf("map anchorPoint %f, %f", anchorPoint.x, anchorPoint.y)
+
+    -- error
+    -- printf("map position %f, %f", mapPosition.x, mapPosition.y)
+
+
+
+
+    
+
+    View 
+	CCLabelTTF
+	CCTableView
+	CCEGLView
+
+include
+
+	USING_NS_CC;、USING_NS_CC_EXT;
+	#include "cocos2d.h"
+	#include "cocos-ext.h"
+
+Menu
+
+	CCMenuItem、CCMenuItemLabel、CCMenuItemFont
+
+CCScale9Sprite
+
+	// Add the ribbon
+	CCScale9Sprite *ribbon = CCScale9Sprite::create("extensions/ribbon.png", CCRectMake(1, 1, 48, 55));
+	ribbon->setContentSize(CCSizeMake(VisibleRect::getVisibleRect().size.width, 57));
+	ribbon->setPosition(ccp(VisibleRect::center().x, VisibleRect::top().y - ribbon->getContentSize().height / 2.0f));
+	addChild(ribbon);
+
+
+CCControlSlider
+
+slider->setTag(1);
+// When the value of the slider will change, the given selector will be call
+slider->addTargetWithActionForControlEvents(this, cccontrol_selector(CCControlSliderTest::valueChanged), CCControlEventValueChanged);
+
+void CCControlSliderTest::valueChanged(CCObject *sender, CCControlEvent controlEvent) {
+    CCControlSlider* pSlider = (CCControlSlider*)sender;
+    // Change value of label.
+	if(pSlider->getTag() == 1)
+		m_pDisplayValueLabel->setString(CCString::createWithFormat("Upper slider value = %.02f", pSlider->getValue())->getCString());  
+	if(pSlider->getTag() == 2)
+		m_pDisplayValueLabel->setString(CCString::createWithFormat("Lower slider value = %.02f", pSlider->getValue())->getCString());  
+}
+
+其中
+/** Kinds of possible events for the control objects. */
+enum 
+{
+    CCControlEventTouchDown           = 1 << 0,    // A touch-down event in the control.
+    CCControlEventTouchDragInside     = 1 << 1,    // An event where a finger is dragged inside the bounds of the control.
+    CCControlEventTouchDragOutside    = 1 << 2,    // An event where a finger is dragged just outside the bounds of the control. 
+    CCControlEventTouchDragEnter      = 1 << 3,    // An event where a finger is dragged into the bounds of the control.
+    CCControlEventTouchDragExit       = 1 << 4,    // An event where a finger is dragged from within a control to outside its bounds.
+    CCControlEventTouchUpInside       = 1 << 5,    // A touch-up event in the control where the finger is inside the bounds of the control. 
+    CCControlEventTouchUpOutside      = 1 << 6,    // A touch-up event in the control where the finger is outside the bounds of the control.
+    CCControlEventTouchCancel         = 1 << 7,    // A system event canceling the current touches for the control.
+    CCControlEventValueChanged        = 1 << 8      // A touch dragging or otherwise manipulating a control, causing it to emit a series of different values.
+};
+typedef unsigned int CCControlEvent;
+
+/** The possible state for a control.  */
+enum 
+{
+    CCControlStateNormal       = 1 << 0, // The normal, or default state of a control°™that is, enabled but neither selected nor highlighted.
+    CCControlStateHighlighted  = 1 << 1, // Highlighted state of a control. A control enters this state when a touch down, drag inside or drag enter is performed. You can retrieve and set this value through the highlighted property.
+    CCControlStateDisabled     = 1 << 2, // Disabled state of a control. This state indicates that the control is currently disabled. You can retrieve and set this value through the enabled property.
+    CCControlStateSelected     = 1 << 3  // Selected state of a control. This state indicates that the control is currently selected. You can retrieve and set this value through the selected property.
+};
+typedef unsigned int CCControlState;
+
+
+CCControlColourPicker
+
+	colourPicker->setColor(ccc3(37, 46, 252));
+	colourPicker->addTargetWithActionForControlEvents(this, cccontrol_selector(CCControlColourPickerTest::colourValueChanged), CCControlEventValueChanged);
+	void CCControlColourPickerTest::colourValueChanged(CCObject *sender, CCControlEvent controlEvent) {
+	    CCControlColourPicker* pPicker = (CCControlColourPicker*)sender;
+	    m_pColorLabel->setString(CCString::createWithFormat("#%02X%02X%02X",pPicker->getColor().r, pPicker->getColor().g, pPicker->getColor().b)->getCString());
+	}
+
+
+CCControlSwitch
+
+	CCControlSwitch *switchControl = CCControlSwitch::create(
+	            CCSprite::create("extensions/switch-mask.png"),
+	            CCSprite::create("extensions/switch-on.png"),
+	            CCSprite::create("extensions/switch-off.png"),
+	            CCSprite::create("extensions/switch-thumb.png"),
+	            CCLabelTTF::create("On", "Arial-BoldMT", 16),
+	            CCLabelTTF::create("Off", "Arial-BoldMT", 16)
+	        );
+	switchControl->addTargetWithActionForControlEvents(this, cccontrol_selector(CCControlSwitchTest::valueChanged), CCControlEventValueChanged);
+	void CCControlSwitchTest::valueChanged(CCObject* sender, CCControlEvent controlEvent)
+	{
+	    CCControlSwitch* pSwitch = (CCControlSwitch*)sender;
+	    if (pSwitch->isOn())
+	    {
+	        m_pDisplayValueLabel->setString("On");
+	    } 
+	    else
+	    {
+	        m_pDisplayValueLabel->setString("Off");
+	    }
+	}
+
+
+CCControlButton
+
+	#define CCStringMake(str) CCString::create(str)
+	#define ccs               CCStringMake
+
+
+	 // Defines an array of title to create buttons dynamically
+	        CCArray *stringArray = CCArray::create(
+	            ccs("Hello"),
+	            ccs("Variable"),
+	            ccs("Size"),
+	            ccs("!"),
+	            NULL);
+	        
+	        CCNode *layer = CCNode::create();
+	        addChild(layer, 1);
+	        
+	        double total_width = 0, height = 0;
+	        
+	        // For each title in the array
+	        CCObject* pObj = NULL;
+	        int i = 0;
+	        CCARRAY_FOREACH(stringArray, pObj)
+	        {
+	            CCString* title = (CCString*)pObj;
+	            // Creates a button with this string as title
+	            CCControlButton *button = standardButtonWithTitle(title->getCString());
+	            if (i == 0)
+	            {
+	                button->setOpacity(50);
+	                button->setColor(ccc3(0, 255, 0));
+	            }
+	            ....
+	}
+	CCControlButton *CCControlButtonTest_HelloVariableSize::standardButtonWithTitle(const char * title)
+	{
+	    /** Creates and return a button with a default background and title color. */
+	    CCScale9Sprite *backgroundButton = CCScale9Sprite::create("extensions/button.png");
+	    CCScale9Sprite *backgroundHighlightedButton = CCScale9Sprite::create("extensions/buttonHighlighted.png");
+	    
+	    CCLabelTTF *titleButton = CCLabelTTF::create(title, "Marker Felt", 30);
+
+	    titleButton->setColor(ccc3(159, 168, 176));
+	    
+	    CCControlButton *button = CCControlButton::create(titleButton, backgroundButton);
+	    button->setBackgroundSpriteForState(backgroundHighlightedButton, CCControlStateHighlighted);
+	    button->setTitleColorForState(ccWHITE, CCControlStateHighlighted);
+
+	    return button;
+	}
+
+
+CCLayer
+CCControl
+CCControlButton
+CCEditBox

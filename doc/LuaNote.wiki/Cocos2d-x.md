@@ -1,4 +1,40 @@
+###宏&函数数组
+```
+class Hello {
 
+};
+
+// IntFuncArray为返回int *的函数数组
+typedef int* (*IntFuncArray)();
+
+// CREATE_INT_FUNC为创建函数的宏，函数名为create${className},即在参数名前面加上create
+#define CREATE_INT_FUNC(className) \
+static int* create##className() \
+{  new className(); return NULL;}
+
+// 函数名简化create${className},即CF(className)表示createClassName
+#define CF(className) create##className
+
+/**
+ * 定义了一个函数
+ * static int* createHello() {
+ *      new Hello(); return NULL;
+ * }
+ */
+CREATE_INT_FUNC(Hello)
+
+/**
+ *  定义了一个函数数组(createHello是上面CREATE_INT_FUNC创建的函数名)：
+ *  {
+ *      createHello
+ *  }
+ */
+static IntFuncArray functionsArray[] = {
+    CF(Hello),
+};
+
+
+```
 
 
 

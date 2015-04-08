@@ -1,0 +1,176 @@
+http://www.litefeel.com/lua-override-userdata/
+http://kingzeus.blog.51cto.com/8504664/1352710
+
+
+====================================================================================
+cpp 4.3以上系统的可以用app ops starter开启系统自带的权限管理
+====================================================================================
+
+
+====================================================================================
+typedef unsigned char   GLubyte;
+
+typedef struct _ccColor3B
+{
+    GLubyte r;
+    GLubyte g;
+    GLubyte b;
+} ccColor3B;
+
+static inline ccColor3B
+ccc3(const GLubyte r, const GLubyte g, const GLubyte b)
+{
+    ccColor3B c = {r, g, b};
+    return c;
+}
+
+static inline bool ccc3BEqual(const ccColor3B &col1, const ccColor3B &col2)
+{
+    return col1.r == col2.r && col1.g == col2.g && col1.b == col2.b;
+}
+
+static const ccColor3B ccWHITE={255,255,255};
+====================================================================================
+
+
+
+
+-- 创建一个 CCPointArray 对象，并预留 100 个点的内存空间
+-- 如果省略参数则不会预留内存空间
+local points = display.newPointArray(100)
+ 
+-- 添加 100 个点，如果点的数量超过 CCPointArray 已有的容量，CCPointArray 会自动扩展
+for i = 1, 100 do
+    points:add(CCPoint(100, 100))
+end
+ 
+-- 插入一个点到指定位置，注意位置索引是从 0 开始计算
+points:insert(CCPoint(200, 200), 0)
+ 
+-- 替换指定位置的点
+points:replace(CCPoint(300, 300), 1)
+ 
+-- 取得指定位置的点
+local point = points:get(10)
+ 
+-- 返回点的数量
+local count = points:count()
+ 
+-- 删除指定位置的点，后续的点会自动前移
+points:remove(10)
+ 
+-- 删除所有点
+points:removeAll()
+ 
+-- 翻转所有点的顺序，返回一个新的 CCPointArray 对象
+local pointsReversed = points:reverse()
+ 
+-- 翻转 CCPointArray 对象中所有点的顺序
+points:reverseInline()
+
+
+local color1 = ccc3(255, 0, 0) -- 纯红色，三个参数分别是 Red（红）、Green（绿）、Blue（蓝）
+ 
+local color2 = ccc4(0, 255, 0, 128) -- 50% 透明度的绿色，最后一个参数是透明度
+ 
+local color3 = ccc4f(0, 0, 1.0, 0.3) -- 30% 透明度的蓝色
+
+
+
+
+CCShapeNode 用于描绘一些基本的几何图形，例如圆、矩形、多边形等等。
+
+~~
+
+对象继承关系： CCObject -> CCNode -> CCShapeNode -> CCCircleShape, CCRectShape, CCPolygonShape, CCPointShape
+
+~~
+
+CCCircleShape
+
+CCCircleShape 在屏幕上绘制一个圆。
+
+local circle = display.newCircle(100) -- 半径 100 点
+circle:setLineColor(ccc4f(1.0, 1.0, 1.0, 1.0))  -- 白色
+circle:setSegments(128)               -- 由 128 个线段组成，线段越多圆越平滑但也更慢，默认为 32 段
+circle:setScaleY(0.8)                 -- 垂直方向拉伸，可以绘制一个椭圆
+~
+
+CCCircleShape 可用的方法有：
+
+getLineColor() 返回线段颜色（ccColor4F 类型）
+setLineColor(ccColor4F 颜色值)
+getLineWidth() 返回线段宽度（整数）
+setLineWidth(线段宽度)
+getRadius() 返回半径
+setRadius(半径)
+getAngle() 返回弧度
+setAngle(弧度) 设置非完整的弧度，可以绘制一条弧
+getSegments() 返回构成圆的线段数量
+setSegments(线段数量)
+isDrawLineToCenter() 确定是否绘制一条到圆心的线
+setDrawLineToCenter(绘制到圆心的线)
+~~
+
+CCRectShape
+
+CCRectShape 绘制一个矩形。
+
+local rect = display.newRect(200, 100) -- 创建一个宽度 200，高度 100 的矩形
+rect:setFill(true) -- 设置为填充
+~
+
+CCRectShape 可用的方法有：
+
+getLineColor() 返回线段颜色（ccColor4F 类型）
+setLineColor(ccColor4F 颜色值)
+getLineWidth() 返回线段宽度（整数）
+setLineWidth(线段宽度)
+setSize(CCSize) 设置矩形大小
+isFill() 确定是否是填充的矩形
+setFill(是否填充)
+~~
+
+CCPolygonShape
+
+CCPolygonShape 绘制一个由多个点组成的多边形。
+
+-- 构造一个包含 3 个点的 CCPointArray 对象
+local points = CCPointArray:create()
+points:add(CCPoint(100, 100))
+points:add(CCPoint(200, 200))
+points:add(CCPoint(300, 100))
+ 
+-- 创建 CCPolygonShape 对象
+local polygon = CCPolygonShape:create(points)
+polygon:setFill(true) -- 填充
+polygon:setClose(true) -- 连接第一个点和最后一个点，形成封闭多边形
+
+
+
+
+decoded = crypto.decodeBase64(编码后的字符串)
+encoded = crypto.encodeBase64(原文字符串)
+
+plaintext = crypto.decryptXXTEA(加密后的字符串, 密钥字符串)
+ciphertext = crypto.encryptXXTEA(明文字符串, 密钥字符串)
+
+
+plaintext = crypto.decryptAES256(加密后的字符串, 密钥字符串)
+ciphertext = crypto.encryptAES256(明文字符串, 密钥字符串)
+
+md5code = crypto.md5(内容字符串, [是否返回二进制 MD5 码])
+
+
+result = network.isLocalWiFiAvailable()WIFI 网络可用不代表可以访问互联网
+
+result = network.isInternetConnectionAvailable()这里接口返回 3G 网络的状态，具体情况与设备和操作系统有关
+
+result = network.isHostNameReachable(主机名)该接口会阻塞程序
+
+code = network.getInternetConnectionStatus()
+	状态值有三种：
+	kCCNetworkStatusNotReachable: 无法访问互联网
+	kCCNetworkStatusReachableViaWiFi: 通过 WIFI
+	kCCNetworkStatusReachableViaWWAN: 通过 3G 网络
+

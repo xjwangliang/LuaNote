@@ -2,8 +2,565 @@ http://www.cnblogs.com/imoon/archive/2013/01/15/2860877.html cocos2d-x 观察者
 http://www.cocos2d-x.org/wiki/EventDispatcher_Mechanism EventDispatcher Mechanism
 
 
+
+
+
+牌型大小依序為：同花順 > 四條 > 葫芦 > 同花 > 順子 > 三条 > 两对 > 一对 > 高牌。
+
+####皇家同花顺（同花大順，Royal Straight Flush）
+同花色的A，K，Q，J和10。
+平手牌：公牌開出皇家同花順，則所有未蓋牌的玩家平手均分籌碼。
+####同花顺（Straight Flush）
+五张同花色的连续牌。同時有同花順時，數字最大者為贏家。
+平手牌：公牌開出同花順為最大時，則所有未蓋牌的玩家平手均分籌碼。
+####四條（Four of a kind）
+其中四张是相同点数的扑克牌，第五张是剩下牌組中最大的一张牌。若有一家以上持有四條（鐵支）（公牌開出四條），則比較第五张牌（起脚牌），最大者為贏家。
+平手牌：公牌開出四條時，最後一張雜牌（或稱為kicker、次大牌、踢腳牌，一副牌型組合中剩下來沒有用作湊牌型的牌，用於牌型相同時比大小）數字也相同時。
+####葫芦（满堂红，三带二，Full house）
+由三张相同点数及任何两张其他相同点数的扑克牌组成，如果同時有多人拿到葫蘆，三张相同点数中數字較大者為赢家。如果三张牌都一样，则再两张牌中点数较大者赢家。
+平手牌：五張牌數字都一样，则平分彩池。
+####同花（Flush）
+此牌由五张不按顺序但相同花色的扑克牌组成，如果不止一人有此牌組，则牌面數字最大的人赢得该局，如果最大点相同，则由第二、第三、第四或者第五张牌来决定胜负。
+平手牌：公牌的同花就是最大的同花牌型時，平分彩池。
+####顺子（Straight）
+此牌由五张顺序扑克牌组成，如果不止一人有此牌組，则五张牌中点数最大的赢得此局，10-J-Q-K-A為最大的順子，A-2-3-4-5為最小的順子。
+平手牌：如果五張牌數字都相同，平分彩池。
+####三条（Three of a kind）
+由三张相同点数和两张不同点数的扑克牌组成，如果不止一人有此牌組，则三张牌中点数者最大赢得該局，如果三张牌數字大小相同，則比較不同點數的兩張牌中數字較大者，若相同時再比第五张，數字大的人赢。
+平手牌：如果五張牌數字都相同，则平分彩池。
+####两对（Two pair）
+两对數字相同但两两不同的扑克和随意的一张牌组成，共五張牌。
+平手牌：如果不止一人抓到此牌型，持有數字比较大的對子者為贏家，若較大數字對子相同，則比較小對子的數字，如果两对對子數字都相同，那么第五张牌（kicker）數字较大者赢。如果連第五張牌數字也相同，则平分彩池。
+####一对（One pair）
+由两张相同点数的扑克牌和另三张無法組成牌型组成。
+平手牌：如果不止一人抓到此牌，则持有較大數字對子者為贏家，如果对牌數字相同，则依序比较剩下的三张牌，數字最大者為赢家，如果五張牌都一样，则平分彩池。
+高牌（High card，no-pair，zitch）
+無法組成以上任一牌型的散牌。
+平手牌：如果不止一人抓到此牌，则比较点数最大者，如果点数最大的相同，则依序比较第二、第三、第四和第五大的，如果五張牌都相同，则平分彩池。
+
+
+
+
+```
+adb shell ip -f inet addr show wlan0
+grep -n . test| sed 's/\(^[0-9]*\):/\1    /g'
+nl -s prefix test | cut -c7-
+sed = test | sed "N;s#\n# #"
+echo "dadagawanglianghell" | sed 's/.*wang.*/#&/' 
+cat test  | sed -e 's/^/\t/' | cat -n | sed -e 's/^t//'
+awk '{printf "%d\t%s\n", NR, $0}' < test 
+cat test | sed '3a\
+--------------------------------------
+> '
+
+cat test | sed '3i\
+--------------------------------------
+'
+```
+
+```
+framwork/init
+	device     = require(cc.PACKAGE_NAME .. ".device")
+	transition = require(cc.PACKAGE_NAME .. ".transition")
+	display    = require(cc.PACKAGE_NAME .. ".display")
+	filter     = require(cc.PACKAGE_NAME .. ".filter")
+	audio      = require(cc.PACKAGE_NAME .. ".audio")
+	ui         = require(cc.PACKAGE_NAME .. ".ui")
+	network    = require(cc.PACKAGE_NAME .. ".network")
+	crypto     = require(cc.PACKAGE_NAME .. ".crypto")
+	json       = require(cc.PACKAGE_NAME .. ".json")
+framwork/cc/init:
+	cc.mvc = import(".mvc.init")
+	-- load more library
+	cc.ui = import(".ui.init")
+	-- load extensions
+	cc.ad = import(".ad.init").new()
+	cc.push = import(".push.init").new()
+	cc.analytics = import(".analytics.init").new()
+	cc.share = import(".share.init").new()
+	cc.feedback = import(".feedback.init").new()
+	cc.update = import(".update.init").new()
+
+framwork/cc/ui/init:
+	ui.UIGroup               = import(".UIGroup")
+	ui.UIImage               = import(".UIImage")
+	ui.UIPushButton          = import(".UIPushButton")
+	ui.UICheckBoxButton      = import(".UICheckBoxButton")
+	ui.UICheckBoxButtonGroup = import(".UICheckBoxButtonGroup")
+	ui.UILabel               = import(".UILabel")
+	ui.UISlider              = import(".UISlider")
+	ui.UIBoxLayout           = import(".UIBoxLayout")
+有两个ui，一个是全局空间的ui，另外一个是cc.ui
+	
+cc.ui.UIImage.new("40.png")
+    :pos(display.cx, display.cy)
+    :addTo(self)
+
+ScaleUIImage
+cc.ui.UIImage.new("40.png")
+    :setLayoutSize(80, 80)
+    :pos(display.cx, display.cy)
+    :addTo(self)
+
+Scale9UIImage
+cc.ui.UIImage.new("slice30.png", {scale9 = true})
+    :setLayoutSize(120, 80)
+    :pos(display.cx, display.cy)
+    :addTo(self)
+    
+cc.ui.UILabel.new({
+        text = "fixed size",
+        size = 16,
+        color = display.COLOR_BLACK,
+    }):align(display.CENTER, display.cx + 350, display.cy + 170):addTo(self)
+--cc.LabelAtlas
+atlasLabel = CCLabelAtlas:create(
+    "AtlasLabel", "tuffy_bold_italic-charmap.png", 
+    48, 64, string.byte(' ')
+)
+    :pos(display.left, display.cy)
+self:addChild(atlasLabel)
+    
+    
+```
+
+```
+function onRequestFinished(event)
+    local ok = (event.name == "completed")
+    local request = event.request
+
+    if not ok then
+        -- 请求失败，显示错误代码和错误消息
+        print(request:getErrorCode(), request:getErrorMessage())
+        return
+    end
+
+    local code = request:getResponseStatusCode()
+    if code ~= 200 then
+        -- 请求结束，但没有返回 200 响应代码
+        print(code)
+        return
+    end
+
+    -- 请求成功，显示服务端返回的内容
+    local response = request:getResponseString()
+    print(response)
+end
+
+-- 创建一个请求，并以 POST 方式发送数据到服务端
+local url = "http://www.mycompany.com/request.php"
+local request = network.createHTTPRequest(onRequestFinished, url, "POST")
+request:addPOSTValue("KEY", "VALUE")
+
+-- 开始请求。当请求完成时会调用 callback() 函数
+request:start()
+
+```
+
+```
+-- ===========================
+	local myhandle
+    -- 定时器
+	local time = 0  
+	local function update(dt)  
+	    time = time + 1  
+	    if time > 10 then
+	    	scheduler.unscheduleGlobal(myhandle)
+	    else
+	    	f:setString(string.format("%d", time))  
+	    end
+	    
+	end  
+	--declare myhandle as local var is error
+	-- 因为闭包要求局部变量myhandle先声明再使用,否则为nil
+	myhandle = scheduler.scheduleGlobal(update,0.5)  
+	
+	
+	
+	self:performWithDelay(function()
+                button:setButtonLabelString("disabled", "Button Disabled")
+                button:setButtonEnabled(true)
+            end, 1.0)
+
+```
+
+###Button
+```
+btn3_img = {
+    normal = "80x40button_n.png",
+    pressed = "80x40button_h.png",
+    disabled = "80x40button_dis.png",
+}
+
+btn3 = cc.ui.UIPushButton.new(btn3_img)
+    :setButtonLabel("normal", ui.newTTFLabel({
+        text = "Button",
+        size = 24,
+        color = ccc3(255, 255, 255),
+    }))    
+    :setButtonLabel("pressed", ui.newTTFLabel({
+        text = "Down",
+        size = 24,
+        color = ccc3(255, 255, 255),
+    }))   
+    :setButtonLabel("disabled", ui.newTTFLabel({
+        text = "Disable",
+        size = 24,
+        color = ccc3(200, 200, 200),
+    }))
+    :pos(display.cx, display.cy)
+    :addTo(self)
+    
+    cc.ui.UIPushButton.new("NextButton.png")
+        :onButtonPressed(function(event)
+            event.target:setScale(1.2)
+        end)
+        :onButtonRelease(function(event)
+            event.target:setScale(1.0)
+        end)
+        :onButtonClicked(function(event)
+            self:enterNextScene()
+        end)
+        :align(display.RIGHT_BOTTOM, display.right - 20, display.bottom + 20)
+        :addTo(scene)
+        
+ local function updateCheckBoxButtonLabel(checkbox)
+        local state = ""
+        if checkbox:isButtonSelected() then
+            state = "on"
+        else
+            state = "off"
+        end
+        if not checkbox:isButtonEnabled() then
+            state = state .. " (disabled)"
+        end
+        checkbox:setButtonLabelString(string.format("state is %s", state))
+    end
+
+    checkBoxButton1 = cc.ui.UICheckBoxButton.new(TestUIButtonScene.CHECKBOX_BUTTON_IMAGES)
+        :setButtonLabel(cc.ui.UILabel.new({text = "", size = 22,  color = ccc3(255, 96, 255)}))
+        :setButtonLabelOffset(0, -40)
+        :setButtonLabelAlignment(display.CENTER)
+        :onButtonStateChanged(function(event)
+            updateCheckBoxButtonLabel(event.target)
+        end)
+        :align(display.LEFT_CENTER, display.left + 40, display.top - 80)
+        :addTo(self)
+    updateCheckBoxButtonLabel(checkBoxButton1)
+```
+###CheckBox
+```
+btn1_img = {
+    off = "30check_off.png",
+    off_pressed = "30check_off.png",
+    off_disabled = "30check_off.png",
+    on = "30check_on.png",
+    on_pressed = "30check_on.png",
+    on_disabled = "30check_on.png",
+}
+
+btn1 = cc.ui.UICheckBoxButton.new(btn1_img)
+    :setButtonLabelOffset(0,0)
+    :setButtonLabelAlignment(display.CENTER)
+    :setButtonSelected(false)   -- 初始按下状态
+    :onButtonStateChanged(function(event)print("CheckBox点击")end)
+    :pos(display.cx, display.cy)
+    :addTo(self)
+    
+     local group = cc.ui.UICheckBoxButtonGroup.new(display.TOP_TO_BOTTOM)
+        :addButton(cc.ui.UICheckBoxButton.new(TestUIButtonScene.RADIO_BUTTON_IMAGES)
+            :setButtonLabel(cc.ui.UILabel.new({text = "option 1", color = display.COLOR_BLACK}))
+            :setButtonLabelOffset(20, 0)
+            :align(display.LEFT_CENTER))
+        :addButton(cc.ui.UICheckBoxButton.new(TestUIButtonScene.RADIO_BUTTON_IMAGES)
+            :setButtonLabel(cc.ui.UILabel.new({text = "option 2", color = display.COLOR_BLACK}))
+            :setButtonLabelOffset(20, 0)
+            :align(display.LEFT_CENTER))
+        :addButton(cc.ui.UICheckBoxButton.new(TestUIButtonScene.RADIO_BUTTON_IMAGES)
+            :setButtonLabel(cc.ui.UILabel.new({text = "option 3", color = display.COLOR_BLACK}))
+            :setButtonLabelOffset(20, 0)
+            :align(display.LEFT_CENTER))
+        :addButton(cc.ui.UICheckBoxButton.new(TestUIButtonScene.RADIO_BUTTON_IMAGES)
+            :setButtonLabel(cc.ui.UILabel.new({text = "option 4 disabled", color = display.COLOR_BLACK}))
+            :setButtonEnabled(false)
+            :setButtonLabelOffset(20, 0)
+            :align(display.LEFT_CENTER))
+        :setButtonsLayoutMargin(10, 10, 10, 10)
+        :onButtonSelectChanged(function(event)
+            printf("Option %d selected, Option %d unselected", event.selected, event.last)
+        end)
+        :align(display.LEFT_TOP, display.left + 40, display.top - 240)
+        :addTo(self)
+    group:getButtonAtIndex(4):setButtonSelected(true)
+
+    cc.ui.UIPushButton.new("GreenButton.png", {scale9 = true})
+        :setButtonSize(160, 40)
+        :setButtonLabel(cc.ui.UILabel.new({text = "Remove option 2", size = 16, color = display.COLOR_BLUE}))
+        :onButtonPressed(function(event)
+            event.target:getButtonLabel():setColor(display.COLOR_RED)
+        end)
+        :onButtonRelease(function(event)
+            event.target:getButtonLabel():setColor(display.COLOR_BLUE)
+        end)
+        :onButtonClicked(function(event)
+            if group:getButtonsCount() == 4 then
+                group:removeButtonAtIndex(2)
+                event.target:removeSelf()
+            end
+        end)
+        :align(display.LEFT_CENTER, display.left + 200, display.top - 210)
+        :addTo(self)
+        
+
+ checkBoxButton1 = cc.ui.UICheckBoxButton.new(TestUIButtonScene.CHECKBOX_BUTTON_IMAGES)
+        :setButtonLabel(cc.ui.UILabel.new({text = "", size = 22,  color = ccc3(255, 96, 255)}))
+        :setButtonLabelOffset(0, -40)
+        :setButtonLabelAlignment(display.CENTER)
+        :onButtonStateChanged(function(event)
+            updateCheckBoxButtonLabel(event.target)
+        end)
+        :align(display.LEFT_CENTER, display.left + 40, display.top - 80)
+        :addTo(self)
+```
+###Radio Group
+```
+RADIO_BUTTON_IMAGES = {
+    off = "30radio_off.png",
+    off_pressed = "30radio_off.png",
+    off_disabled = "30radio_dis.png",
+    on = "30radio_on.png",
+    on_pressed = "30radio_on.png",
+    on_disabled = "30radio_dis.png",
+}
+
+local group = cc.ui.UICheckBoxButtonGroup.new(display.TOP_TO_BOTTOM)
+    :addButton(cc.ui.UICheckBoxButton.new(RADIO_BUTTON_IMAGES)
+    :setButtonLabel(cc.ui.UILabel.new({text = "option 1", color =     display.COLOR_BLACK}))
+    :setButtonLabelOffset(20, 0)
+    :align(display.LEFT_CENTER))
+    :addButton(cc.ui.UICheckBoxButton.new(RADIO_BUTTON_IMAGES)
+    :setButtonLabel(cc.ui.UILabel.new({text = "option 2", color =     display.COLOR_BLACK}))
+    :setButtonLabelOffset(20, 0)
+    :align(display.LEFT_CENTER))
+    :addButton(cc.ui.UICheckBoxButton.new(RADIO_BUTTON_IMAGES)
+    :setButtonLabel(cc.ui.UILabel.new({text = "option 3", color =     display.COLOR_BLACK}))
+    :setButtonLabelOffset(20, 0)
+    :align(display.LEFT_CENTER))
+    :addButton(cc.ui.UICheckBoxButton.new(RADIO_BUTTON_IMAGES)
+    :setButtonLabel(cc.ui.UILabel.new({text = "option 4 disabled", color =     display.COLOR_BLACK}))
+    :setButtonEnabled(false)
+    :setButtonLabelOffset(20, 0)
+    :align(display.LEFT_CENTER))
+    :setButtonsLayoutMargin(0, 0, 0, 0)
+    :onButtonSelectChanged(function(event)
+        printf("Option %d selected, Option %d unselected", event.selected, event.last)
+        end)
+    :pos(display.cx, display.cy)
+    :addTo(self)
+group:getButtonAtIndex(4):setButtonSelected(true)
+```
+###HScroll
+```
+SLIDER_IMAGES = {
+    bar = "120x30hscrollbar.png",
+    button = "60x30hscrollhandle.png",
+}
+
+cc.ui.UISlider.new(display.LEFT_TO_RIGHT, SLIDER_IMAGES, {scale9 = true})
+    :onSliderValueChanged(function(event)
+          printf(string.format("value = %0.2f", event.value))
+    end)
+    :setSliderSize(200, 30)
+    :setSliderValue(75)
+    :pos(display.cx, display.cy)
+    :addTo(self)
+```
+###VScroll
+```
+
+
+SLIDER_IMAGES2 = {
+    bar = "30x120vscrollbar.png",
+    button = "30x60vscrollhandle.png",
+}
+
+cc.ui.UISlider.new(display.TOP_TO_BOTTOM, SLIDER_IMAGES2, {scale9 = true})
+    :onSliderValueChanged(function(event)
+        printf(string.format("value = %0.2f", event.value))
+    end)
+    :setSliderSize(30, 200)
+    :setSliderValue(75)
+    :align(display.CENTER, display.cx, display.cy)
+    :addTo(self)
+```
+
+###Sprite
+
+```
+local sprite1 = display.newSprite("walkBomb.png")
+sprite1:setPosition(display.cx, display.cy)
+sprite1:setAnchorPoint(0.5, 0.5)
+sprite1:setScale(1)
+self:addChild(sprite1)
+
+
+display.addSpriteFramesWithFile("enemy.plist", "enemy.png")
+local spriteAtlas = display.newSprite("#beeBomb.png")
+spriteAtlas:setPosition(display.cx, display.cy)
+self:addChild(spriteAtlas)
+
+local frames = display.newFrames("role%02d.png", 1, 10, true)
+local animation = display.newAnimation(frames, 0.3 / 10)
+sprite:runAction(CCRepeatForever:create(CCAnimate:create(animation)))
+
+```
+###其他
+```
+local red = display.newRect(80, 80, {fill=true, color=ccc4f(255, 0, 0, 0.5)})
+red:setPosition(display.cx, display.cy)
+self:addChild(red)
+
+local points = {{0, 0}, {80, 80}, {160, 0},}
+local polygon = display.newPolygon(points, {fill=true, color=ccc4f(255, 0, 0, 0.5)})
+polygon:setClose(true)
+polygon:setPosition(display.cx, display.cy)
+self:addChild(polygon)
+
+local line = display.newPolygon({{display.cx, display.top}, {display.cx, display.bottom}}):addTo(scene)
+line:setLineColor(ccc4f(1.0, 0.75, 0.75, 1.0))
+    
+
+local circle = display.newCircle(80, {fill=true, color=ccc4f(255, 0, 0, 0.5)})
+circle:setPosition(display.cx, display.cy)
+self:addChild(circle)
+
+```
+###CocoStudio Armature
+```
+
+
+display.addSpriteFramesWithFile("DemoPlayer/DemoPlayer0.plist", "DemoPlayer/DemoPlayer0.png")
+CCArmatureDataManager:sharedArmatureDataManager():addArmatureFileInfo("DemoPlayer/DemoPlayer.ExportJson")
+local armature = CCArmature:create("DemoPlayer")
+armature:getAnimation():playWithIndex(0)
+armature:setScale(0.2)
+armature:setAnchorPoint(ccp(0.5, 0.5))
+armature:setPosition(ccp(display.cx, display.cy))
+self:addChild(armature)
+```
+###DragonBone
+```
+
+
+local manager = CCArmatureDataManager:sharedArmatureDataManager()
+manager:addArmatureFileInfo("Dragon.png", "Dragon.plist", "Dragon.xml")
+local dragon = CCArmature:create("Dragon")
+
+self.animationNames = {"stand", "walk", "jump", "fall"}
+local aniName = self.animationNames[math.random(1,4)]
+
+local animation = dragon:getAnimation()
+animation:setSpeedScale(24 / 60) -- Flash fps is 24, cocos2d-x is 60
+animation:play(aniName)
+dragon:setPosition(display.cx, display.cy - 200)
+dragon:setScale(math.random(50, 100) / 100)
+self:addChild(dragon)
+```
+###内置Particle
+```
+emitter = CCParticleRain:create()
+self:addChild(emitter)
+```
+
+```
+ui.newMenu/newImageItemLabel/newTTFMenuItem/newTTFLabel/newEditBox/newBMFFontLabel/(此ui是全局空间)
+
+framework/cc/init.lua
+cc.ui = import(".ui.init")
+
+framework/cc/ui/init.lua
+ui.UIGroup               = import(".UIGroup")
+ui.UIImage               = import(".UIImage")
+ui.UIPushButton          = import(".UIPushButton")
+ui.UICheckBoxButton      = import(".UICheckBoxButton")
+ui.UICheckBoxButtonGroup = import(".UICheckBoxButtonGroup")
+ui.UILabel               = import(".UILabel")
+ui.UISlider              = import(".UISlider")
+ui.UIBoxLayout           = import(".UIBoxLayout")
+(此ui是cc空间)
+
+--addSpriteFramesWithFile
+sharedTextureCache:addImageAsync(image, asyncHandler)
+local texture = sharedTextureCache:textureForKey(image)
+sharedSpriteFrameCache:addSpriteFramesWithFile(plistFilename, texture)
+
+
+display.newSprite() 有三种方式创建显示对象：
+1   从图片文件创建
+2   从缓存的图像帧创建
+3   从 CCSpriteFrame 对象创建
+
+-- 从图片文件创建显示对象
+local sprite1 = display.newSprite("hello1.png")
+
+-- 从缓存的图像帧创建显示对象
+-- 图像帧的名字就是图片文件名，但为了和图片文件名区分，所以此处需要在文件名前添加 “#” 字符
+-- 添加 “#” 的规则适用于所有需要区分图像和图像帧的地方
+local sprite2 = display.newSprite("#frame0001.png")
+
+-- 从 CCSpriteFrame 对象创建
+local frame = display.newSpriteFrame("frame0002.png")
+local sprite3 = display.newSprite(frame)
+
+例如：
+display.addSpriteFramesWithFile("Sprites.plist", "Sprites.png")
+-- 创建一个 CCSprite
+local sprite = display.newSprite("#Yes.png")
+-- 创建一个图像帧
+local frameNo = display.newSpriteFrame("No.png")
+-- 在需要时，修改 CCSprite 的显示内容
+sprite:setDisplayFrame(frameNo)
+
+
+
+framework/cc/ui/init.lua
+function makeUIControl_(control)
+    cc(control)
+    control:addComponent("components.ui.LayoutProtocol"):exportMethods()
+    control:addComponent("components.behavior.EventProtocol"):exportMethods()
+
+    control:setCascadeOpacityEnabled(true)
+    control:setCascadeColorEnabled(true)
+    control:addNodeEventListener(c.NODE_EVENT, function(event)
+        if event.name == "cleanup" then
+            control:removeAllEventListeners()
+        end
+    end)
+end
+
+UIGroup/UIImage/UILabel/UILayout/UIStretch/UIButton/UIGroup/UIImage/UILabel/UISlider都在ctor中调用此方法,也就是说它们都拥有LayoutProtocol和EventProtocol
+
+
+display.ANCHOR_POINTS = {
+    CCPoint(0.5, 0.5),  -- CENTER
+    CCPoint(0, 1),      -- TOP_LEFT
+    CCPoint(0.5, 1),    -- TOP_CENTER
+    CCPoint(1, 1),      -- TOP_RIGHT
+    CCPoint(0, 0.5),    -- CENTER_LEFT
+    CCPoint(1, 0.5),    -- CENTER_RIGHT
+    CCPoint(0, 0),      -- BOTTOM_LEFT
+    CCPoint(1, 0),      -- BOTTOM_RIGHT
+    CCPoint(0.5, 0),    -- BOTTOM_CENTER
+}
+
+```
+shortcodes
 ###调用“父类”的方法
 ```
+
+getPositionInCCPoint
+
+
 以AppBase:enterScene方法为例
 function AppBase:enterScene(sceneName, args, transitionType, time, more)
     local scenePackageName = self. packageRoot .. ".scenes." .. sceneName
@@ -18,7 +575,7 @@ function MyApp:enterMenuScene()
     self:enterScene("MenuScene", nil, "fade", 0.6, display.COLOR_WHITE)
 end
 
---调用“父类”的方法，通过super，注意是点号，不是冒号
+--调用“父类”的方法，通过super，注意是点号，不是冒号，并且“多”加一个参数self
 function UIDemoApp:enterScene(sceneName, ...)
     self.currentSceneName_ = sceneName
     UIDemoApp.super.enterScene(self, sceneName, ...)
@@ -244,6 +801,7 @@ end
 -   cc.TOUCH_MODE_ONE_BY_ONE - 单点触摸
 
 cocos2dx 中的全局函数(在framework/cocos2dx/Global.lua)
+
 cc.Node/Scene(在framework/cocos2dx/ObjectBinding.lua)
 
 引入其他扩展：
@@ -321,6 +879,10 @@ node:addNodeEventListener(cc.NODE_EVENT, function(event)
      exitTransitionStart 节点退出场景的变换开始
     print(event.name)
 end)
+或者
+ local node = MyNode.new(name)
+    node:setNodeEventEnabled(true) -- 启用节点事件，会调用节点预定义的方法
+    scene:addChild(node)
 ```
 ####2.scheduleUpdate
 ```
@@ -430,7 +992,29 @@ node:addNodeEventListener(cc.NODE_TOUCH_CAPTURE_EVENT, function(event)
         return true
     end
 end)
+
+加速度、重力感应事件
+local node = display.newNode()
+node:addNodeEventListener(cc.ACCELERATE_EVENT, function(event)
+    print(event.x, event.y, event.z, event.timestamp)
+end)
+scene:addChild(node)
+
+
+应用程序级别的事件：
+
+APP_ENTER_BACKGROUND_EVENT: 应用进入后台
+APP_ENTER_FOREGROUND_EVENT: 应用从后台恢复运行
+app:addEventListener("APP_ENTER_BACKGROUND_EVENT", function(event)
+    ...
+end)
+
+app:addEventListener("APP_ENTER_FOREGROUND_EVENT", function(event)
+    ...
+end)
 ```
+
+
 
 ####4.扩展功能的变化
 ```
@@ -484,6 +1068,33 @@ line2 = string.gsub(line,"%.","|");
 
 
 ###动画
+```
+CCBlink *blink=CCBlink::create(1,3);//闪烁动画  
+  
+        CCAnimation* animation=CCAnimation::create();  
+        animation->setDelayPerUnit(0.1f);  
+        animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("hero1.png"));  
+        animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("hero2.png"));  
+        CCAnimate* animate=CCAnimate::create(animation);//帧动画  
+          
+        plane->runAction(blink);//执行闪烁动画  
+        plane->runAction(CCRepeatForever::create(animate));// 执行帧动画
+
+
+
+CCAnimation* animation=CCAnimation::create();
+		animation->setDelayPerUnit(0.2f);
+		animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("game_loading1.png"));
+		animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("game_loading2.png"));
+		animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("game_loading3.png"));
+		animation->addSpriteFrame(CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("game_loading4.png"));
+
+		CCAnimate* animate=CCAnimate::create(animation);
+		CCRepeat* repeat=CCRepeat::create(animate,2);
+		CCCallFuncN* repeatdone=CCCallFuncN::create(this,callfuncN_selector(WelcomeLayer::loadingDone));
+		CCSequence* sequence=CCSequence::create(repeat,repeatdone);
+		loading->runAction(sequence);     
+```
 * transition.execute(target, action, args)   
 
 ```

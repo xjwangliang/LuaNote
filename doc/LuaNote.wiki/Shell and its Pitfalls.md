@@ -1,3 +1,9 @@
+#删除svn状态为！的文件
+svn status | awk '$1=="!" {print $2}' | xargs svn delete
+类似的
+find . -iname "*foobar*" | xargs rm
+
+
 #Example
 ```
 插入行/追加行/替换行命令: i/a/c
