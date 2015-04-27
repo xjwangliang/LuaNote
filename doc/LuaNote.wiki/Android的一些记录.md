@@ -376,6 +376,240 @@ tab_indicator.xml
 </selector>
 ```
 
+###TypedArray
+```
+		// Get system attrs (android:textSize and android:textColor)
+		
+		
+		private static final int[] ATTRS = new int[] {
+			android.R.attr.textSize,
+			android.R.attr.textColor
+    	};
+    	
+    	// attrs包含一堆属性，obtainStyledAttributes是获取这一堆属性中的两个
+    	// 得到一个属性值数组，通过index获取
+		TypedArray a = context.obtainStyledAttributes(attrs, ATTRS);
+
+		tabTextSize = a.getDimensionPixelSize(0, tabTextSize);
+		tabTextColor = a.getColor(1, tabTextColor);
+		
+		
+		attrs.xml
+		<declare-styleable name="PullToRefresh">
+		        
+		<!-- Must be one or more (separated by '|') of the following constant values. -->
+		<attr name="ptrMode">
+            <flag name="disabled" value="0x0" />
+            <flag name="pullFromStart" value="0x1" />
+            <flag name="pullFromEnd" value="0x2" />
+            <flag name="both" value="0x3" />
+            <flag name="manualOnly" value="0x4" />
+
+            <!-- These last two are depreacted -->
+            <flag name="pullDownFromTop" value="0x1" />
+            <flag name="pullUpFromBottom" value="0x2" />
+        </attr>
+        <attr name="ptrHeaderTextAppearance" format="reference" />
+        <attr name="ptrDrawable" format="reference" />
+        <attr name="ptrRefreshableViewBackground" format="reference|color" />
+		</declare-styleable>
+        
+        R.java生成了属性数组和每个属性的索引：
+        public static final int[] PullToRefresh = {
+            0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003,
+            0x7f010004, 0x7f010005, 0x7f010006, 0x7f010007,
+            0x7f010008, 0x7f010009, 0x7f01000a, 0x7f01000b,
+            0x7f01000c, 0x7f01000d, 0x7f01000e, 0x7f01000f,
+            0x7f010010, 0x7f010011, 0x7f010012
+        };
+        
+        public static final int PullToRefresh_ptrMode = 4;
+        
+        
+	    layout.xml
+        <com.duoku.gamesearch.view.pull.PullToRefreshListView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:ptr="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/pull_refresh_list"
+        style="@style/content_list"
+        android:fadingEdge="none"
+        android:scrollbars="none"
+        ptr:ptrAnimationStyle="flip"
+        ptr:ptrHeaderTextAppearance="@style/pull_header_TextAppearance"
+        ptr:ptrListViewExtrasEnabled="false"
+        ptr:ptrMode="pullFromStart"
+        ptr:ptrOverScroll="false"
+        ptr:ptrScrollingWhileRefreshingEnabled="true"
+        ptr:ptrShowIndicator="false"
+       />
+
+		<style name="pull_header_TextAppearance" parent="@android:style/TextAppearance.Small">
+        <item name="android:textColor">#6666</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    
+        代码
+        // 通过属性数组获取属性值数组
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PullToRefresh);
+        //通过index从属性值数组获取属性值
+        int mode = a.getInteger(R.styleable.PullToRefresh_ptrMode, 0)
+        
+        TypedValue styleID = new TypedValue();
+		a.getValue(R.styleable.PullToRefresh_ptrHeaderTextAppearance, styleID);
+		setTextAppearance(styleID.data);
+			
+        imageDrawable = attrs.getDrawable(R.styleable.PullToRefresh_ptrDrawable);
+        Drawable background = a.getDrawable(R.styleable.PullToRefresh_ptrRefreshableViewBackground);
+        
+        
+        
+        
+        
+        <attr name="tabBackground" format="reference" />
+        tabBackgroundResId = a.getResourceId(R.styleable.PagerSlidingTabStrip_tabBackground, tabBackgroundResId);
+        
+        getLayoutDimension
+        
+        getString/getText
+        
+```
+
+###Blur
+```
+@SuppressLint("NewApi")
+	public static Bitmap blur(Context context, Bitmap bkg, float radius) {
+		Bitmap overlay = Bitmap.createBitmap(bkg.getWidth(), bkg.getHeight(),
+				Bitmap.Config.ARGB_8888);
+		Canvas canvas = new Canvas(overlay);
+		canvas.drawBitmap(bkg, 0.0F, 0.0F, null);
+		RenderScript rs = RenderScript.create(context);
+		Allocation overlayAlloc = Allocation.createFromBitmap(rs, overlay);
+		ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rs,
+				overlayAlloc.getElement());
+		blur.setInput(overlayAlloc);
+		blur.setRadius(radius);
+		blur.forEach(overlayAlloc);
+		overlayAlloc.copyTo(overlay);
+
+		rs.destroy();
+		return overlay;
+	}
+  public static void blurBitmap(Context context, Bitmap overlay, float radius)
+  {
+    RenderScript rs = RenderScript.create(context);
+    Allocation overlayAlloc = Allocation.createFromBitmap(
+      rs, overlay);
+    ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(
+      rs, overlayAlloc.getElement());
+    blur.setInput(overlayAlloc);
+    blur.setRadius(radius);
+    blur.forEach(overlayAlloc);
+    overlayAlloc.copyTo(overlay);
+    rs.destroy();
+  }
+}
+
+```
+线程操作经常用到wait和notify，用起来稍显繁琐，而Android给我们封装好了一个ConditionVariable类，用于线程同步。提供了三个方法`block`()、`open`()、`close`()
+
+- void `block`()
+	阻塞当前线程，直到条件为open
+- boolean `block`(long timeout)
+	阻塞当前线程，直到条件为open(返回true)或超时(返回false)
+- void `open`()
+	释放所有阻塞的线程
+- void `close`()
+	将条件重置为close
+	
+```
+// variable which controls the notification thread 
+    private ConditionVariable mCondition;
+ 
+    @Override
+    public void onCreate() {
+        mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Start up the thread running the service.  Note that we create a
+        // separate thread because the service normally runs in the process's
+        // main thread, which we don't want to block.
+        Thread notifyingThread = new Thread(null, mTask, "NotifyingService");
+        mCondition = new ConditionVariable(false);
+        notifyingThread.start();
+    }
+
+    @Override
+    public void onDestroy() {
+        // Cancel the persistent notification.
+        mNM.cancel(MOOD_NOTIFICATIONS);
+        // Stop the thread from generating further notifications
+        mCondition.open();
+    }
+
+    private Runnable mTask = new Runnable() {
+        public void run() {
+            for (int i = 0; i < 4; ++i) {
+                showNotification(R.drawable.stat_happy,
+                        R.string.status_bar_notifications_happy_message);
+                if (mCondition.block(5 * 1000)) 
+                    break;
+                showNotification(R.drawable.stat_neutral,
+                        R.string.status_bar_notifications_ok_message);
+                if (mCondition.block(5 * 1000)) 
+                    break;
+                showNotification(R.drawable.stat_sad,
+                        R.string.status_bar_notifications_sad_message);
+                if (mCondition.block(5 * 1000)) 
+                    break;
+            }
+            // Done with our work...  stop the service!
+            NotifyingService.this.stopSelf();
+        }
+    };
+
+```
+
+Fragment真正意义上的onResume和onPause
+@Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            //相当于Fragment的onResume
+        } else {
+            //相当于Fragment的onPause
+        }
+    }
+通过阅读ViewPager和PageAdapter相关的代码，切换Fragment实际上就是通过设置setUserVisibleHint和setMenuVisibility来实现的，调用这个方法时并不会释放掉Fragment（即不会执行onDestoryView）。
+
+
+//  public void dismissAndGoHome() {
+//  if (mRecentsPanel != null) {
+//      Intent homeIntent = new Intent(Intent.ACTION_MAIN, null);
+//      homeIntent.addCategory(Intent.CATEGORY_HOME);
+//      homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//              | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+//      startActivityAsUser(homeIntent, new UserHandle(UserHandle.USER_CURRENT));
+//      mRecentsPanel.show(false);
+//  }
+//}
+
+//public void dismissAndGoBack() {
+//  if (mRecentsPanel != null) {
+//      final ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+//
+//      final List<ActivityManager.RecentTaskInfo> recentTasks =
+//              am.getRecentTasks(2,
+//                      ActivityManager.RECENT_WITH_EXCLUDED |
+//                      ActivityManager.RECENT_IGNORE_UNAVAILABLE);
+//      if (recentTasks.size() > 1 &&
+//              mRecentsPanel.simulateClick(recentTasks.get(1).persistentId)) {
+//          // recents panel will take care of calling show(false) through simulateClick
+//          return;
+//      }
+//      mRecentsPanel.show(false);
+//  }
+//  finish();
+//}
 
 //    public class TouchOutsideListener implements View.OnTouchListener {
 //        private StatusBarPanel mPanel;
@@ -397,6 +631,9 @@ tab_indicator.xml
 //    }
 
 
+
+
+
     
   final LayoutTransition transitioner = new LayoutTransition();
             ((ViewGroup)mRecentsContainer).setLayoutTransition(transitioner);
@@ -407,4 +644,4 @@ tab_indicator.xml
         transitioner.setAnimator(LayoutTransition.DISAPPEARING, null);
     }
 
-        
+

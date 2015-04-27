@@ -1,6 +1,6 @@
-###Crossfade
+###Crossfade渐变动画
    
-   This sample demonstrates cross-fading between two overlapping views.
+渐变动画This sample demonstrates cross-fading between two overlapping views.
    
    ```
     /**
